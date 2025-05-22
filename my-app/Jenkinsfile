@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'my-app'
+        DOCKERHUB_USER = 'b5zerk'
+    }
+
+    stages {
+        stage('Clone repo') {
+            steps {
+                git 'https://github.com/yavornikolaev/repo2.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("${IMAGE_NAME}:latest")
+                }
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                withDockerRegistry([credentialsId: 'dockerhub-creds', url: '']) {
+                    script {
+                        dockerImage.push()
+                    }
+                }
+            }
+        }
+
+        stage('Clean up') {
+            steps {
+                sh 'docker rmi ${IMAGE_NAME}:latest'
+            }
+        }
+    }
+}
+
